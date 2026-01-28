@@ -1,0 +1,21 @@
+classDiagram
+class PresentationLayer {
+  <<package>>
+  +API
+  +Services
+}
+
+class BusinessLogicLayer {
+  <<package>>
+  +HBnBFacade
+  +Models
+}
+
+class PersistenceLayer {
+  <<package>>
+  +Repositories
+  +Database
+}
+
+PresentationLayer --> BusinessLogicLayer : uses facade
+BusinessLogicLayer --> PersistenceLayer : persistence ops
