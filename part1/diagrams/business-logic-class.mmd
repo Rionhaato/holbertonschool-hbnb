@@ -1,0 +1,48 @@
+classDiagram
+class BaseModel {
+  +UUID4 id
+  +datetime created_at
+  +datetime updated_at
+}
+
+class User {
+  +string first_name
+  +string last_name
+  +string email
+  +string password
+  +bool is_admin
+  +update_profile(first_name, last_name, email, password)
+}
+
+class Place {
+  +string title
+  +string description
+  +float price
+  +float latitude
+  +float longitude
+  +update_details(title, description, price, latitude, longitude)
+}
+
+class Review {
+  +int rating
+  +string comment
+  +update_review(rating, comment)
+}
+
+class Amenity {
+  +string name
+  +string description
+  +update_details(name, description)
+}
+
+BaseModel <|-- User
+BaseModel <|-- Place
+BaseModel <|-- Review
+BaseModel <|-- Amenity
+
+User "1" --> "0..*" Place : owns
+User "1" --> "0..*" Review : writes
+Place "1" *-- "0..*" Review : reviews
+Place "*" --> "*" Amenity : includes
+Review "1" --> "1" Place : for
+Review "1" --> "1" User : by
