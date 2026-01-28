@@ -1,0 +1,14 @@
+sequenceDiagram
+participant Client
+participant API as Presentation.API
+participant Facade as BusinessLogic.HBnBFacade
+participant User as BusinessLogic.User
+participant Repo as Persistence.UserRepository
+
+Client->>API: POST /users (payload)
+API->>Facade: register_user(payload)
+Facade->>User: create(payload)
+Facade->>Repo: save(user)
+Repo-->>Facade: user_id
+Facade-->>API: user_id
+API-->>Client: 201 Created (user_id)

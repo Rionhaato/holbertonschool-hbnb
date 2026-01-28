@@ -1,0 +1,12 @@
+sequenceDiagram
+participant Client
+participant API as Presentation.API
+participant Facade as BusinessLogic.HBnBFacade
+participant Repo as Persistence.PlaceRepository
+
+Client->>API: GET /places
+API->>Facade: list_places()
+Facade->>Repo: fetch_all()
+Repo-->>Facade: places[]
+Facade-->>API: places[]
+API-->>Client: 200 OK (places[])

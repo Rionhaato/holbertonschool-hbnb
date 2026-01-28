@@ -1,0 +1,14 @@
+sequenceDiagram
+participant Client
+participant API as Presentation.API
+participant Facade as BusinessLogic.HBnBFacade
+participant Place as BusinessLogic.Place
+participant Repo as Persistence.PlaceRepository
+
+Client->>API: POST /places (payload)
+API->>Facade: create_place(payload, owner_id)
+Facade->>Place: create(payload, owner_id)
+Facade->>Repo: save(place)
+Repo-->>Facade: place_id
+Facade-->>API: place_id
+API-->>Client: 201 Created (place_id)

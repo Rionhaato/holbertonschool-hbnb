@@ -1,0 +1,14 @@
+sequenceDiagram
+participant Client
+participant API as Presentation.API
+participant Facade as BusinessLogic.HBnBFacade
+participant Review as BusinessLogic.Review
+participant Repo as Persistence.ReviewRepository
+
+Client->>API: POST /places/{id}/reviews (payload)
+API->>Facade: submit_review(place_id, user_id, payload)
+Facade->>Review: create(place_id, user_id, payload)
+Facade->>Repo: save(review)
+Repo-->>Facade: review_id
+Facade-->>API: review_id
+API-->>Client: 201 Created (review_id)
