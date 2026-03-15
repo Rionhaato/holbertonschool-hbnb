@@ -235,3 +235,33 @@ What changed:
 This gives the project proper bidirectional ORM navigation while keeping the
 existing API payload format based on `owner_id`, `user_id`, `place_id`, and
 `amenity_ids`.
+
+## Task 9 Notes
+
+Task 9 adds raw SQL scripts so the full schema can be created without relying
+on SQLAlchemy.
+
+Files added:
+
+- `sql/schema.sql`
+  Creates all tables, constraints, indexes, and the `place_amenity`
+  association table.
+- `sql/seed_data.sql`
+  Inserts the initial administrator row and a starter amenity set.
+- `sql/crud_checks.sql`
+  Runs sample create, read, update, and delete statements against the schema.
+
+Suggested SQLite usage:
+
+```bash
+sqlite3 hbnb_dev.db < sql/schema.sql
+sqlite3 hbnb_dev.db < sql/seed_data.sql
+sqlite3 hbnb_dev.db < sql/crud_checks.sql
+```
+
+Important note:
+
+- the admin seed row uses a placeholder bcrypt hash because a bcrypt generator
+  is not available in this local environment
+- replace `REPLACE_WITH_VALID_BCRYPT_HASH` with a real bcrypt hash before using
+  the seeded account for application login
