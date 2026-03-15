@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flask import current_app, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, fields
 
 
@@ -123,6 +123,18 @@ class ReviewsResource(Resource):
         if missing:
             api.abort(400, f"{missing} is required")
 
+        current_user_id = get_jwt_identity()
+        if data["user_id"] != current_user_id:
+            api.abort(403, "You can only create reviews as yourself")
+
+        place = _facade().get_place(data["place_id"])
+        if place is None:
+            api.abort(400, "place_id must reference an existing place")
+        if place.owner_id == current_user_id:
+            api.abort(403, "You cannot review your own place")
+        if _facade().get_review_by_user_and_place(current_user_id, place.id) is not None:
+            api.abort(400, "You have already reviewed this place")
+
         data.setdefault("rating", 0)
 
         try:
@@ -158,6 +170,9 @@ class ReviewResource(Resource):
         if review is None:
             api.abort(404, "Review not found")
 
+        if get_jwt_identity() != review.user_id:
+            api.abort(403, "You can only modify your own reviews")
+
         data.pop("id", None)
         data.pop("created_at", None)
         data.pop("updated_at", None)
@@ -177,6 +192,9 @@ class ReviewResource(Resource):
         review = _facade().get_review(review_id)
         if review is None:
             api.abort(404, "Review not found")
+
+        if get_jwt_identity() != review.user_id:
+            api.abort(403, "You can only delete your own reviews")
 
         _facade().delete_review(review_id)
         return {"message": "Review deleted"}, 200

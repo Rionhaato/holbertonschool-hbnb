@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flask import current_app, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, fields
 
 
@@ -163,6 +163,10 @@ class PlacesResource(Resource):
         if missing:
             api.abort(400, f"{missing} is required")
 
+        current_user_id = get_jwt_identity()
+        if data["owner_id"] != current_user_id:
+            api.abort(403, "You can only create places for your own user")
+
         data.setdefault("description", "")
         data.setdefault("amenity_ids", [])
 
@@ -199,9 +203,13 @@ class PlaceResource(Resource):
         if place is None:
             api.abort(404, "Place not found")
 
+        if get_jwt_identity() != place.owner_id:
+            api.abort(403, "You can only modify your own places")
+
         data.pop("id", None)
         data.pop("created_at", None)
         data.pop("updated_at", None)
+        data.pop("owner_id", None)
 
         try:
             updated = _facade().update_place(place_id, data)

@@ -123,6 +123,148 @@ class TestAPI(unittest.TestCase):
         )
         self.assertEqual(unauthorized_place.status_code, 401)
 
+    def test_user_can_only_update_own_profile_and_not_email_or_password(self):
+        user = self._create_user("self@example.com")
+        other_user = self._create_user("other@example.com")
+
+        own_headers = self._auth_headers(email="self@example.com")
+        res = self.client.put(
+            f"/api/v1/users/{user['id']}",
+            json={
+                "first_name": "Updated",
+                "email": "ignored@example.com",
+                "password": "new-secret",
+            },
+            headers=own_headers,
+        )
+        self.assertEqual(res.status_code, 200)
+        payload = res.get_json()
+        self.assertEqual(payload["first_name"], "Updated")
+        self.assertEqual(payload["email"], "self@example.com")
+        self.assertNotIn("password", payload)
+
+        forbidden = self.client.put(
+            f"/api/v1/users/{other_user['id']}",
+            json={"first_name": "Hack"},
+            headers=own_headers,
+        )
+        self.assertEqual(forbidden.status_code, 403)
+
+    def test_place_owner_controls_place_mutations(self):
+        owner = self._create_user("owner2@example.com")
+        other_user = self._create_user("intruder@example.com")
+
+        place = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Owner Place",
+                "description": "Center",
+                "price": 100,
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "owner_id": owner["id"],
+                "amenity_ids": [],
+            },
+            headers=self._auth_headers(email="owner2@example.com"),
+        )
+        self.assertEqual(place.status_code, 201)
+        place_id = place.get_json()["id"]
+
+        forbidden_create = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Bad Place",
+                "description": "Center",
+                "price": 100,
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "owner_id": owner["id"],
+                "amenity_ids": [],
+            },
+            headers=self._auth_headers(email="intruder@example.com"),
+        )
+        self.assertEqual(forbidden_create.status_code, 403)
+
+        forbidden_update = self.client.put(
+            f"/api/v1/places/{place_id}",
+            json={"price": 200},
+            headers=self._auth_headers(email="intruder@example.com"),
+        )
+        self.assertEqual(forbidden_update.status_code, 403)
+
+        owner_update = self.client.put(
+            f"/api/v1/places/{place_id}",
+            json={"price": 150, "owner_id": other_user["id"]},
+            headers=self._auth_headers(email="owner2@example.com"),
+        )
+        self.assertEqual(owner_update.status_code, 200)
+        updated_payload = owner_update.get_json()
+        self.assertEqual(updated_payload["price"], 150.0)
+        self.assertEqual(updated_payload["owner_id"], owner["id"])
+
+    def test_review_rules_enforce_author_and_uniqueness(self):
+        owner = self._create_user("host@example.com")
+        reviewer = self._create_user("guest@example.com")
+        other_user = self._create_user("otherguest@example.com")
+
+        place_res = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Beach House",
+                "description": "Ocean",
+                "price": 300,
+                "latitude": 12.34,
+                "longitude": 56.78,
+                "owner_id": owner["id"],
+                "amenity_ids": [],
+            },
+            headers=self._auth_headers(email="host@example.com"),
+        )
+        self.assertEqual(place_res.status_code, 201)
+        place_id = place_res.get_json()["id"]
+
+        own_review = self.client.post(
+            "/api/v1/reviews/",
+            json={"text": "Mine", "rating": 5, "user_id": owner["id"], "place_id": place_id},
+            headers=self._auth_headers(email="host@example.com"),
+        )
+        self.assertEqual(own_review.status_code, 403)
+
+        review_res = self.client.post(
+            "/api/v1/reviews/",
+            json={"text": "Great", "rating": 5, "user_id": reviewer["id"], "place_id": place_id},
+            headers=self._auth_headers(email="guest@example.com"),
+        )
+        self.assertEqual(review_res.status_code, 201)
+        review_id = review_res.get_json()["id"]
+
+        duplicate = self.client.post(
+            "/api/v1/reviews/",
+            json={"text": "Again", "rating": 4, "user_id": reviewer["id"], "place_id": place_id},
+            headers=self._auth_headers(email="guest@example.com"),
+        )
+        self.assertEqual(duplicate.status_code, 400)
+
+        forbidden_update = self.client.put(
+            f"/api/v1/reviews/{review_id}",
+            json={"text": "Hijack"},
+            headers=self._auth_headers(email="otherguest@example.com"),
+        )
+        self.assertEqual(forbidden_update.status_code, 403)
+
+        allowed_update = self.client.put(
+            f"/api/v1/reviews/{review_id}",
+            json={"text": "Updated review"},
+            headers=self._auth_headers(email="guest@example.com"),
+        )
+        self.assertEqual(allowed_update.status_code, 200)
+
+        forbidden_delete = self.client.delete(
+            f"/api/v1/reviews/{review_id}",
+            headers=self._auth_headers(email="otherguest@example.com"),
+        )
+        self.assertEqual(forbidden_delete.status_code, 403)
+
     def test_status_endpoint(self):
         res = self.client.get("/api/v1/status")
         self.assertEqual(res.status_code, 200)

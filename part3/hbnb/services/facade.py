@@ -148,6 +148,14 @@ class HBnBFacade:
     def get_reviews_by_place(self, place_id: str) -> list[Review]:
         return self.repository.get_by_attribute("Review", place_id=place_id)
 
+    def get_review_by_user_and_place(self, user_id: str, place_id: str) -> Review | None:
+        matches = self.repository.get_by_attribute(
+            "Review",
+            user_id=user_id,
+            place_id=place_id,
+        )
+        return matches[0] if matches else None
+
     def update_review(self, review_id: str, data: dict[str, Any]) -> Review | None:
         return self._update(Review, review_id, data)
 

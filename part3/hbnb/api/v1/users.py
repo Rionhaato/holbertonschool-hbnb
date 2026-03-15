@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flask import current_app, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, fields
 
 
@@ -119,9 +119,15 @@ class UserResource(Resource):
         if user is None:
             api.abort(404, "User not found")
 
+        if get_jwt_identity() != user_id:
+            api.abort(403, "You can only modify your own user details")
+
         data.pop("id", None)
         data.pop("created_at", None)
         data.pop("updated_at", None)
+        data.pop("email", None)
+        data.pop("password", None)
+        data.pop("is_admin", None)
 
         try:
             updated = _facade().update_user(user_id, data)
