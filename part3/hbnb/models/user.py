@@ -11,9 +11,34 @@ try:
 except ImportError:
     from extensions import bcrypt
 
+try:
+    from ..extensions import db
+except ImportError:
+    from extensions import db
 
-class User(BaseModel):
+if db is not None:
+    SQLAlchemyModel = db.Model
+else:
+    class SQLAlchemyModel:
+        """Fallback base when Flask-SQLAlchemy is unavailable."""
+
+        pass
+
+
+class User(BaseModel, SQLAlchemyModel):
     """Represents an application user."""
+
+    if db is None:
+        from typing import ClassVar
+
+        __tablename__: ClassVar[str] = "users"
+    else:
+        __tablename__ = "users"
+        _first_name = db.Column("first_name", db.String(50), nullable=False, default="")
+        _last_name = db.Column("last_name", db.String(50), nullable=False, default="")
+        _email = db.Column("email", db.String(255), nullable=False, unique=True, index=True)
+        _password = db.Column("password", db.String(255), nullable=False)
+        _is_admin = db.Column("is_admin", db.Boolean, nullable=False, default=False)
 
     EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 

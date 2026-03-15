@@ -11,8 +11,9 @@ from ..persistence import Repository
 class HBnBFacade:
     """Facade that exposes business operations used by the API layer."""
 
-    def __init__(self, repository: Repository):
+    def __init__(self, repository: Repository, user_repository: Repository | None = None):
         self.repository = repository
+        self.user_repository = user_repository or repository
 
     def _create(self, model_cls: type, data: dict[str, Any]):
         obj = model_cls(**data)
@@ -40,23 +41,26 @@ class HBnBFacade:
         if not email:
             raise ValueError("email is required")
 
-        existing = self.repository.get_by_attribute("User", email=email)
-        if existing:
+        existing = self.get_user_by_email(email)
+        if existing is not None:
             raise ValueError("email already exists")
 
         data = dict(data)
         data["email"] = email
-        return self._create(User, data)
+        user = User(**data)
+        return self.user_repository.add(user)
 
     def get_user(self, user_id: str) -> User | None:
-        return self._get(User, user_id)
+        return self.user_repository.get(User.__name__, user_id)
 
     def get_users(self) -> list[User]:
-        return self._get_all(User)
+        return self.user_repository.get_all(User.__name__)
 
     def get_user_by_email(self, email: str) -> User | None:
         normalized_email = email.strip().lower()
-        matches = self.repository.get_by_attribute("User", email=normalized_email)
+        if hasattr(self.user_repository, "get_by_email"):
+            return self.user_repository.get_by_email(normalized_email)
+        matches = self.user_repository.get_by_attribute("User", email=normalized_email)
         return matches[0] if matches else None
 
     def authenticate_user(self, email: str, password: str) -> User | None:
@@ -70,15 +74,22 @@ class HBnBFacade:
     def update_user(self, user_id: str, data: dict[str, Any]) -> User | None:
         if "email" in data:
             new_email = data["email"].strip().lower()
-            duplicates = self.repository.get_by_attribute("User", email=new_email)
+            email_filter = "_email" if hasattr(self.user_repository, "get_by_email") else "email"
+            duplicates = self.user_repository.get_by_attribute("User", **{email_filter: new_email})
             if any(user.id != user_id for user in duplicates):
                 raise ValueError("email already exists")
             data = dict(data)
             data["email"] = new_email
-        return self._update(User, user_id, data)
+
+        user = self.get_user(user_id)
+        if user is None:
+            return None
+
+        user.update(data)
+        return self.user_repository.update(user)
 
     def delete_user(self, user_id: str) -> bool:
-        return self._delete(User, user_id)
+        return self.user_repository.delete(User.__name__, user_id)
 
     def create_amenity(self, data: dict[str, Any]) -> Amenity:
         name = data.get("name", "").strip()

@@ -178,3 +178,26 @@ class DevelopmentConfig(Config):
 
 At that point, the application factory can use the SQLAlchemy repository with
 real mapped entities and a live database session.
+
+## Task 6 Notes
+
+Task 6 maps the shared base fields and the `User` entity to SQLAlchemy and
+introduces a dedicated `UserRepository`.
+
+What changed:
+
+- `hbnb/models/base_model.py` now provides SQLAlchemy-compatible `id`,
+  `created_at`, and `updated_at` fields as a reusable abstract base mixin
+- `hbnb/models/user.py` is now a mapped SQLAlchemy model for the `users` table
+- `hbnb/persistence/user_repository.py` implements SQLAlchemy-backed user
+  persistence
+- `hbnb/services/facade.py` now routes user CRUD and authentication through the
+  dedicated user repository
+- `hbnb/__init__.py` initializes the database tables for mapped user storage and
+  keeps unmapped entities on the in-memory repository for now
+
+Current persistence split:
+
+- `User` is stored persistently with SQLAlchemy
+- `Place`, `Review`, and `Amenity` remain on the in-memory repository until
+  their mapping tasks are completed

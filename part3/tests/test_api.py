@@ -20,6 +20,7 @@ class TestConfig(Config):
 
     TESTING = True
     JWT_SECRET_KEY = "test-secret-key"
+    REPOSITORY_TYPE = "in_memory"
 
 
 @unittest.skipUnless(FLASK_AVAILABLE, "Flask dependencies are not installed")
