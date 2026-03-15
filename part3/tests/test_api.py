@@ -19,6 +19,7 @@ class TestConfig(Config):
     """Test-specific configuration."""
 
     TESTING = True
+    JWT_SECRET_KEY = "test-secret-key"
 
 
 @unittest.skipUnless(FLASK_AVAILABLE, "Flask dependencies are not installed")
@@ -28,6 +29,24 @@ class TestAPI(unittest.TestCase):
     def setUp(self):
         app = create_app(TestConfig)
         self.client = app.test_client()
+
+    def _auth_headers(self, email="john@example.com", password="secret"):
+        self.client.post(
+            "/api/v1/users/",
+            json={
+                "first_name": "Auth",
+                "last_name": "User",
+                "email": email,
+                "password": password,
+            },
+        )
+        response = self.client.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": password},
+        )
+        self.assertEqual(response.status_code, 200)
+        token = response.get_json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
 
     def _create_user(self, email="john@example.com"):
         payload = {
@@ -41,7 +60,8 @@ class TestAPI(unittest.TestCase):
         return res.get_json()
 
     def _create_amenity(self, name="WiFi"):
-        res = self.client.post("/api/v1/amenities/", json={"name": name})
+        headers = self._auth_headers()
+        res = self.client.post("/api/v1/amenities/", json={"name": name}, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
 
@@ -57,7 +77,8 @@ class TestAPI(unittest.TestCase):
             "owner_id": owner_id,
             "amenity_ids": amenity_ids,
         }
-        res = self.client.post("/api/v1/places/", json=payload)
+        headers = self._auth_headers(email="owner@example.com")
+        res = self.client.post("/api/v1/places/", json=payload, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
 
@@ -68,9 +89,39 @@ class TestAPI(unittest.TestCase):
             "user_id": user_id,
             "place_id": place_id,
         }
-        res = self.client.post("/api/v1/reviews/", json=payload)
+        headers = self._auth_headers(email="author@example.com")
+        res = self.client.post("/api/v1/reviews/", json=payload, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
+
+    def test_login_returns_access_token(self):
+        user = self._create_user()
+        res = self.client.post(
+            "/api/v1/auth/login",
+            json={"email": user["email"], "password": "secret"},
+        )
+        self.assertEqual(res.status_code, 200)
+        payload = res.get_json()
+        self.assertIn("access_token", payload)
+        self.assertEqual(payload["user_id"], user["id"])
+        self.assertEqual(payload["email"], user["email"])
+        self.assertFalse(payload["is_admin"])
+
+    def test_protected_endpoints_require_jwt(self):
+        user = self._create_user("secure@example.com")
+        unauthorized_place = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Secure Loft",
+                "description": "Center",
+                "price": 100,
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "owner_id": user["id"],
+                "amenity_ids": [],
+            },
+        )
+        self.assertEqual(unauthorized_place.status_code, 401)
 
     def test_status_endpoint(self):
         res = self.client.get("/api/v1/status")
@@ -91,8 +142,9 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(get_res.status_code, 200)
         self.assertNotIn("password", get_res.get_json())
 
+        headers = self._auth_headers()
         put_res = self.client.put(
-            f"/api/v1/users/{user_id}", json={"first_name": "Jane"}
+            f"/api/v1/users/{user_id}", json={"first_name": "Jane"}, headers=headers
         )
         self.assertEqual(put_res.status_code, 200)
         self.assertEqual(put_res.get_json()["first_name"], "Jane")
@@ -110,7 +162,12 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(get_res.status_code, 200)
         self.assertEqual(get_res.get_json()["name"], "Pool")
 
-        put_res = self.client.put(f"/api/v1/amenities/{amenity_id}", json={"name": "AC"})
+        headers = self._auth_headers()
+        put_res = self.client.put(
+            f"/api/v1/amenities/{amenity_id}",
+            json={"name": "AC"},
+            headers=headers,
+        )
         self.assertEqual(put_res.status_code, 200)
         self.assertEqual(put_res.get_json()["name"], "AC")
 
@@ -124,7 +181,12 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(place["reviews"], [])
 
         place_id = place["id"]
-        put_res = self.client.put(f"/api/v1/places/{place_id}", json={"price": 120})
+        headers = self._auth_headers(email="owner@example.com")
+        put_res = self.client.put(
+            f"/api/v1/places/{place_id}",
+            json={"price": 120},
+            headers=headers,
+        )
         self.assertEqual(put_res.status_code, 200)
         self.assertEqual(put_res.get_json()["price"], 120.0)
 
@@ -146,11 +208,16 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(place_res.status_code, 200)
         self.assertEqual(len(place_res.get_json()["reviews"]), 1)
 
-        put_res = self.client.put(f"/api/v1/reviews/{review_id}", json={"text": "Updated"})
+        headers = self._auth_headers(email="author@example.com")
+        put_res = self.client.put(
+            f"/api/v1/reviews/{review_id}",
+            json={"text": "Updated"},
+            headers=headers,
+        )
         self.assertEqual(put_res.status_code, 200)
         self.assertEqual(put_res.get_json()["text"], "Updated")
 
-        del_res = self.client.delete(f"/api/v1/reviews/{review_id}")
+        del_res = self.client.delete(f"/api/v1/reviews/{review_id}", headers=headers)
         self.assertEqual(del_res.status_code, 200)
 
         get_deleted = self.client.get(f"/api/v1/reviews/{review_id}")
@@ -180,6 +247,7 @@ class TestAPI(unittest.TestCase):
                 "owner_id": owner["id"],
                 "amenity_ids": [],
             },
+            headers=self._auth_headers(email="place-owner@example.com"),
         )
         self.assertEqual(bad_place.status_code, 400)
 
@@ -187,6 +255,7 @@ class TestAPI(unittest.TestCase):
         bad_review = self.client.post(
             "/api/v1/reviews/",
             json={"text": "x", "rating": 9, "user_id": owner["id"], "place_id": place["id"]},
+            headers=self._auth_headers(email="place-owner@example.com"),
         )
         self.assertEqual(bad_review.status_code, 400)
 
