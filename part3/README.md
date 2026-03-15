@@ -265,3 +265,26 @@ Important note:
   is not available in this local environment
 - replace `REPLACE_WITH_VALID_BCRYPT_HASH` with a real bcrypt hash before using
   the seeded account for application login
+
+## Task 10 Notes
+
+Task 10 adds a Mermaid ER diagram for the Part 3 database schema.
+
+Files added:
+
+- `diagrams/database-er-diagram.mmd`
+  Mermaid ER diagram covering `users`, `places`, `reviews`, `amenities`, and
+  `place_amenity`.
+
+Diagram scope:
+
+- one-to-many: `users` to `places`
+- one-to-many: `users` to `reviews`
+- one-to-many: `places` to `reviews`
+- many-to-many: `places` to `amenities` through `place_amenity`
+
+Rendering note:
+
+- the Mermaid CLI tool (`mmdc`) is not installed in this local environment, so
+  PNG and PDF exports were not generated here
+- the `.mmd` source is ready to render once Mermaid CLI is available
