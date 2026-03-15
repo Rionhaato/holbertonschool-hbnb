@@ -28,18 +28,38 @@ class TestAPI(unittest.TestCase):
 
     def setUp(self):
         app = create_app(TestConfig)
+        self.app = app
         self.client = app.test_client()
 
     def _auth_headers(self, email="john@example.com", password="secret"):
-        self.client.post(
-            "/api/v1/users/",
-            json={
-                "first_name": "Auth",
-                "last_name": "User",
-                "email": email,
-                "password": password,
-            },
+        if self.app.config["FACADE"].get_user_by_email(email) is None:
+            self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "Auth",
+                    "last_name": "User",
+                    "email": email,
+                    "password": password,
+                }
+            )
+        response = self.client.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": password},
         )
+        self.assertEqual(response.status_code, 200)
+        token = response.get_json()["access_token"]
+        return {"Authorization": f"Bearer {token}"}
+
+    def _admin_headers(self, email="admin@example.com", password="secret"):
+        if self.app.config["FACADE"].get_user_by_email(email) is None:
+            self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "Admin",
+                    "last_name": "User",
+                    "email": email,
+                    "password": password,
+                    "is_admin": True,
+                }
+            )
         response = self.client.post(
             "/api/v1/auth/login",
             json={"email": email, "password": password},
@@ -49,18 +69,21 @@ class TestAPI(unittest.TestCase):
         return {"Authorization": f"Bearer {token}"}
 
     def _create_user(self, email="john@example.com"):
-        payload = {
-            "first_name": "John",
-            "last_name": "Doe",
-            "email": email,
-            "password": "secret",
-        }
-        res = self.client.post("/api/v1/users/", json=payload)
-        self.assertEqual(res.status_code, 201)
-        return res.get_json()
+        existing = self.app.config["FACADE"].get_user_by_email(email)
+        if existing is None:
+            user = self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "email": email,
+                    "password": "secret",
+                }
+            )
+            return user.to_dict()
+        return existing.to_dict()
 
     def _create_amenity(self, name="WiFi"):
-        headers = self._auth_headers()
+        headers = self._admin_headers()
         res = self.client.post("/api/v1/amenities/", json={"name": name}, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
@@ -95,7 +118,15 @@ class TestAPI(unittest.TestCase):
         return res.get_json()
 
     def test_login_returns_access_token(self):
-        user = self._create_user()
+        payload = {
+            "first_name": "John",
+            "last_name": "Doe",
+            "email": "john@example.com",
+            "password": "secret",
+        }
+        res = self.client.post("/api/v1/users/", json=payload)
+        self.assertEqual(res.status_code, 201)
+        user = res.get_json()
         res = self.client.post(
             "/api/v1/auth/login",
             json={"email": user["email"], "password": "secret"},
@@ -150,6 +181,79 @@ class TestAPI(unittest.TestCase):
         )
         self.assertEqual(forbidden.status_code, 403)
 
+    def test_admin_can_create_and_update_any_user(self):
+        seed_user = self._create_user("seed@example.com")
+        admin_headers = self._admin_headers()
+
+        create_res = self.client.post(
+            "/api/v1/users/",
+            json={
+                "first_name": "Managed",
+                "last_name": "User",
+                "email": "managed@example.com",
+                "password": "secret",
+            },
+            headers=admin_headers,
+        )
+        self.assertEqual(create_res.status_code, 201)
+        managed_user = create_res.get_json()
+
+        update_res = self.client.put(
+            f"/api/v1/users/{seed_user['id']}",
+            json={
+                "first_name": "AdminUpdated",
+                "email": "admin-updated@example.com",
+                "password": "new-secret",
+                "is_admin": True,
+            },
+            headers=admin_headers,
+        )
+        self.assertEqual(update_res.status_code, 200)
+        update_payload = update_res.get_json()
+        self.assertEqual(update_payload["first_name"], "AdminUpdated")
+        self.assertEqual(update_payload["email"], "admin-updated@example.com")
+        self.assertTrue(update_payload["is_admin"])
+        self.assertEqual(managed_user["email"], "managed@example.com")
+
+    def test_non_admin_cannot_create_users_after_bootstrap(self):
+        self._create_user("bootstrap@example.com")
+        res = self.client.post(
+            "/api/v1/users/",
+            json={
+                "first_name": "Blocked",
+                "last_name": "User",
+                "email": "blocked@example.com",
+                "password": "secret",
+            },
+            headers=self._auth_headers(email="bootstrap@example.com"),
+        )
+        self.assertEqual(res.status_code, 403)
+
+    def test_amenities_are_admin_only(self):
+        self._create_user("member@example.com")
+        forbidden_create = self.client.post(
+            "/api/v1/amenities/",
+            json={"name": "Gym"},
+            headers=self._auth_headers(email="member@example.com"),
+        )
+        self.assertEqual(forbidden_create.status_code, 403)
+
+        allowed_create = self.client.post(
+            "/api/v1/amenities/",
+            json={"name": "Gym"},
+            headers=self._admin_headers(),
+        )
+        self.assertEqual(allowed_create.status_code, 201)
+        amenity_id = allowed_create.get_json()["id"]
+
+        allowed_update = self.client.put(
+            f"/api/v1/amenities/{amenity_id}",
+            json={"name": "Sauna"},
+            headers=self._admin_headers(),
+        )
+        self.assertEqual(allowed_update.status_code, 200)
+        self.assertEqual(allowed_update.get_json()["name"], "Sauna")
+
     def test_place_owner_controls_place_mutations(self):
         owner = self._create_user("owner2@example.com")
         other_user = self._create_user("intruder@example.com")
@@ -201,6 +305,34 @@ class TestAPI(unittest.TestCase):
         updated_payload = owner_update.get_json()
         self.assertEqual(updated_payload["price"], 150.0)
         self.assertEqual(updated_payload["owner_id"], owner["id"])
+
+    def test_admin_can_bypass_place_ownership_rules(self):
+        owner = self._create_user("realowner@example.com")
+        admin_headers = self._admin_headers()
+
+        create_res = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Admin Managed",
+                "description": "Center",
+                "price": 100,
+                "latitude": 40.7128,
+                "longitude": -74.0060,
+                "owner_id": owner["id"],
+                "amenity_ids": [],
+            },
+            headers=admin_headers,
+        )
+        self.assertEqual(create_res.status_code, 201)
+        place_id = create_res.get_json()["id"]
+
+        update_res = self.client.put(
+            f"/api/v1/places/{place_id}",
+            json={"price": 175},
+            headers=admin_headers,
+        )
+        self.assertEqual(update_res.status_code, 200)
+        self.assertEqual(update_res.get_json()["price"], 175.0)
 
     def test_review_rules_enforce_author_and_uniqueness(self):
         owner = self._create_user("host@example.com")
@@ -265,6 +397,49 @@ class TestAPI(unittest.TestCase):
         )
         self.assertEqual(forbidden_delete.status_code, 403)
 
+    def test_admin_can_bypass_review_ownership_rules(self):
+        owner = self._create_user("adminhost@example.com")
+        reviewer = self._create_user("adminguest@example.com")
+        admin_headers = self._admin_headers(email="superadmin@example.com")
+
+        place_res = self.client.post(
+            "/api/v1/places/",
+            json={
+                "title": "Admin Review Target",
+                "description": "Ocean",
+                "price": 300,
+                "latitude": 12.34,
+                "longitude": 56.78,
+                "owner_id": owner["id"],
+                "amenity_ids": [],
+            },
+            headers=self._auth_headers(email="adminhost@example.com"),
+        )
+        self.assertEqual(place_res.status_code, 201)
+        place_id = place_res.get_json()["id"]
+
+        review_res = self.client.post(
+            "/api/v1/reviews/",
+            json={"text": "Admin authored", "rating": 5, "user_id": reviewer["id"], "place_id": place_id},
+            headers=admin_headers,
+        )
+        self.assertEqual(review_res.status_code, 201)
+        review_id = review_res.get_json()["id"]
+
+        update_res = self.client.put(
+            f"/api/v1/reviews/{review_id}",
+            json={"text": "Admin updated"},
+            headers=admin_headers,
+        )
+        self.assertEqual(update_res.status_code, 200)
+        self.assertEqual(update_res.get_json()["text"], "Admin updated")
+
+        delete_res = self.client.delete(
+            f"/api/v1/reviews/{review_id}",
+            headers=admin_headers,
+        )
+        self.assertEqual(delete_res.status_code, 200)
+
     def test_status_endpoint(self):
         res = self.client.get("/api/v1/status")
         self.assertEqual(res.status_code, 200)
@@ -304,7 +479,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(get_res.status_code, 200)
         self.assertEqual(get_res.get_json()["name"], "Pool")
 
-        headers = self._auth_headers()
+        headers = self._admin_headers()
         put_res = self.client.put(
             f"/api/v1/amenities/{amenity_id}",
             json={"name": "AC"},

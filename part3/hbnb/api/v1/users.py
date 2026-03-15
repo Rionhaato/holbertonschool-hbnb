@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from flask import current_app, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_request
 from flask_restx import Namespace, Resource, fields
+
+from ..authz import is_admin
 
 
 api = Namespace("users", description="User operations")
@@ -86,6 +88,12 @@ class UsersResource(Resource):
         if missing_field:
             api.abort(400, f"{missing_field} is required")
 
+        existing_users = _facade().get_users()
+        if existing_users:
+            verify_jwt_in_request(optional=True)
+            if not is_admin():
+                api.abort(403, "Only administrators can create new users")
+
         try:
             user = _facade().create_user(data)
         except (TypeError, ValueError) as exc:
@@ -119,15 +127,17 @@ class UserResource(Resource):
         if user is None:
             api.abort(404, "User not found")
 
-        if get_jwt_identity() != user_id:
+        admin = is_admin()
+        if not admin and get_jwt_identity() != user_id:
             api.abort(403, "You can only modify your own user details")
 
         data.pop("id", None)
         data.pop("created_at", None)
         data.pop("updated_at", None)
-        data.pop("email", None)
-        data.pop("password", None)
-        data.pop("is_admin", None)
+        if not admin:
+            data.pop("email", None)
+            data.pop("password", None)
+            data.pop("is_admin", None)
 
         try:
             updated = _facade().update_user(user_id, data)

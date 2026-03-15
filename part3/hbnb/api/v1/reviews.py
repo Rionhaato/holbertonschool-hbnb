@@ -6,6 +6,8 @@ from flask import current_app, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, fields
 
+from ..authz import is_admin
+
 
 api = Namespace("reviews", description="Review operations")
 
@@ -124,15 +126,17 @@ class ReviewsResource(Resource):
             api.abort(400, f"{missing} is required")
 
         current_user_id = get_jwt_identity()
-        if data["user_id"] != current_user_id:
+        admin = is_admin()
+        if not admin and data["user_id"] != current_user_id:
             api.abort(403, "You can only create reviews as yourself")
 
         place = _facade().get_place(data["place_id"])
         if place is None:
             api.abort(400, "place_id must reference an existing place")
-        if place.owner_id == current_user_id:
+        if not admin and place.owner_id == current_user_id:
             api.abort(403, "You cannot review your own place")
-        if _facade().get_review_by_user_and_place(current_user_id, place.id) is not None:
+        review_author_id = data["user_id"]
+        if _facade().get_review_by_user_and_place(review_author_id, place.id) is not None:
             api.abort(400, "You have already reviewed this place")
 
         data.setdefault("rating", 0)
@@ -170,7 +174,7 @@ class ReviewResource(Resource):
         if review is None:
             api.abort(404, "Review not found")
 
-        if get_jwt_identity() != review.user_id:
+        if not is_admin() and get_jwt_identity() != review.user_id:
             api.abort(403, "You can only modify your own reviews")
 
         data.pop("id", None)
@@ -193,7 +197,7 @@ class ReviewResource(Resource):
         if review is None:
             api.abort(404, "Review not found")
 
-        if get_jwt_identity() != review.user_id:
+        if not is_admin() and get_jwt_identity() != review.user_id:
             api.abort(403, "You can only delete your own reviews")
 
         _facade().delete_review(review_id)

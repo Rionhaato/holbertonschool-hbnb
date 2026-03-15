@@ -6,6 +6,8 @@ from flask import current_app, request
 from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, fields
 
+from ..authz import is_admin
+
 
 api = Namespace("amenities", description="Amenity operations")
 
@@ -53,6 +55,9 @@ class AmenitiesResource(Resource):
     @jwt_required()
     def post(self):
         """Create an amenity."""
+        if not is_admin():
+            api.abort(403, "Administrator privileges are required")
+
         data = request.get_json(silent=True)
         if not data:
             api.abort(400, "Invalid JSON payload")
@@ -86,6 +91,9 @@ class AmenityResource(Resource):
     @jwt_required()
     def put(self, amenity_id: str):
         """Update one amenity by id."""
+        if not is_admin():
+            api.abort(403, "Administrator privileges are required")
+
         data = request.get_json(silent=True)
         if not data:
             api.abort(400, "Invalid JSON payload")
