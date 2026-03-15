@@ -193,11 +193,26 @@ What changed:
   persistence
 - `hbnb/services/facade.py` now routes user CRUD and authentication through the
   dedicated user repository
-- `hbnb/__init__.py` initializes the database tables for mapped user storage and
-  keeps unmapped entities on the in-memory repository for now
+- `hbnb/__init__.py` initializes the database tables for mapped user storage
 
-Current persistence split:
+## Task 7 Notes
 
-- `User` is stored persistently with SQLAlchemy
-- `Place`, `Review`, and `Amenity` remain on the in-memory repository until
-  their mapping tasks are completed
+Task 7 extends SQLAlchemy mapping to the remaining core entities: `Place`,
+`Review`, and `Amenity`.
+
+What changed:
+
+- `hbnb/models/place.py` is now a mapped `places` table model
+- `hbnb/models/review.py` is now a mapped `reviews` table model
+- `hbnb/models/amenity.py` is now a mapped `amenities` table model
+- `hbnb/__init__.py` now registers all mapped entities in the SQLAlchemy model
+  map
+- the generic `SQLAlchemyRepository` now supports CRUD for all mapped entities
+- repository tests now cover persistent storage for `User`, `Place`, `Review`,
+  and `Amenity`
+
+Important limitation:
+
+- no SQLAlchemy relationships are defined yet
+- foreign keys and object relationships will be added in later tasks
+- for now, only the core scalar attributes are mapped and stored

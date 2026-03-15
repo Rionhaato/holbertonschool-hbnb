@@ -4,9 +4,9 @@ from flask import Flask
 
 from .api import init_api
 from .extensions import db, init_extensions
-from .models import User
+from .models import Amenity, Place, Review, User
 from .services import HBnBFacade
-from .persistence import InMemoryRepository, UserRepository
+from .persistence import InMemoryRepository, SQLAlchemyRepository, UserRepository
 from config import Config
 
 
@@ -14,9 +14,8 @@ def _build_repository(app: Flask):
     """Create the configured persistence adapter."""
     repository_type = app.config.get("REPOSITORY_TYPE", "sqlalchemy")
     if repository_type == "sqlalchemy":
-        # Only the User entity is mapped at this stage, so the remaining
-        # entities continue to use the in-memory repository until later tasks.
-        return InMemoryRepository()
+        model_map = app.config.get("SQLALCHEMY_MODEL_MAP", {})
+        return SQLAlchemyRepository(db, model_map=model_map)
     return InMemoryRepository()
 
 
@@ -34,7 +33,15 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.config.from_object(config_class)
     init_extensions(app)
 
-    app.config.setdefault("SQLALCHEMY_MODEL_MAP", {"User": User})
+    app.config.setdefault(
+        "SQLALCHEMY_MODEL_MAP",
+        {
+            "User": User,
+            "Place": Place,
+            "Review": Review,
+            "Amenity": Amenity,
+        },
+    )
 
     repository = _build_repository(app)
     user_repository = _build_user_repository(app)

@@ -12,7 +12,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 try:
     from config import Config
     from hbnb import create_app
-    from hbnb.persistence import UserRepository
+    from hbnb.persistence import SQLAlchemyRepository, UserRepository
 
     SQLA_AVAILABLE = True
 except ModuleNotFoundError:
@@ -35,9 +35,11 @@ class TestUserRepository(unittest.TestCase):
     def setUp(self):
         self.app = create_app(RepositoryTestConfig)
         self.repo = self.app.config["FACADE"].user_repository
+        self.generic_repo = self.app.config["FACADE"].repository
 
     def test_user_repository_is_sqlalchemy_backed(self):
         self.assertIsInstance(self.repo, UserRepository)
+        self.assertIsInstance(self.generic_repo, SQLAlchemyRepository)
 
     def test_user_persists_and_can_be_queried_by_email(self):
         with self.app.app_context():
@@ -53,3 +55,46 @@ class TestUserRepository(unittest.TestCase):
             self.assertIsNotNone(fetched)
             self.assertEqual(fetched.id, user.id)
             self.assertTrue(fetched.check_password("secret"))
+
+    def test_place_review_and_amenity_persist_with_sqlalchemy(self):
+        with self.app.app_context():
+            owner = self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "Owner",
+                    "last_name": "User",
+                    "email": "owner@example.com",
+                    "password": "secret",
+                }
+            )
+            amenity = self.app.config["FACADE"].create_amenity({"name": "WiFi"})
+            place = self.app.config["FACADE"].create_place(
+                {
+                    "title": "Loft",
+                    "description": "Central",
+                    "price": 120,
+                    "latitude": 40.0,
+                    "longitude": -73.0,
+                    "owner_id": owner.id,
+                    "amenity_ids": [amenity.id],
+                }
+            )
+            review = self.app.config["FACADE"].create_review(
+                {
+                    "text": "Great stay",
+                    "rating": 5,
+                    "user_id": owner.id,
+                    "place_id": place.id,
+                }
+            )
+
+            fetched_place = self.generic_repo.get("Place", place.id)
+            fetched_review = self.generic_repo.get("Review", review.id)
+            fetched_amenity = self.generic_repo.get("Amenity", amenity.id)
+
+            self.assertIsNotNone(fetched_place)
+            self.assertEqual(fetched_place.title, "Loft")
+            self.assertEqual(fetched_place.amenity_ids, [amenity.id])
+            self.assertIsNotNone(fetched_review)
+            self.assertEqual(fetched_review.text, "Great stay")
+            self.assertIsNotNone(fetched_amenity)
+            self.assertEqual(fetched_amenity.name, "WiFi")
