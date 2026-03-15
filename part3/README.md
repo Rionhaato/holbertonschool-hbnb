@@ -137,3 +137,44 @@ After Task 0, the next tasks will typically build toward:
 - SQLAlchemy integration
 - relational database modeling
 - environment-specific database configuration
+
+## Task 5 Notes
+
+Task 5 introduces the SQLAlchemy persistence foundation without enabling full
+database-backed runtime behavior yet.
+
+What was added:
+
+- `Flask-SQLAlchemy` was added to `requirements.txt`
+- `hbnb/extensions.py` now initializes a shared `db` extension
+- `hbnb/persistence/sqlalchemy_repository.py` implements the repository
+  contract using SQLAlchemy sessions
+- `hbnb/__init__.py` now selects the repository backend through
+  `REPOSITORY_TYPE`
+- `config.py` now includes SQLAlchemy-related configuration values
+
+Current behavior:
+
+- the default repository remains `in_memory`
+- if `REPOSITORY_TYPE=sqlalchemy`, the app will build a
+  `SQLAlchemyRepository`
+- mapped SQLAlchemy model classes must be provided through
+  `SQLALCHEMY_MODEL_MAP`
+- actual model mapping and database initialization are intentionally deferred to
+  the next task
+
+Example integration path for the next task:
+
+```python
+class DevelopmentConfig(Config):
+    REPOSITORY_TYPE = "sqlalchemy"
+    SQLALCHEMY_MODEL_MAP = {
+        "User": UserModel,
+        "Place": PlaceModel,
+        "Review": ReviewModel,
+        "Amenity": AmenityModel,
+    }
+```
+
+At that point, the application factory can use the SQLAlchemy repository with
+real mapped entities and a live database session.
