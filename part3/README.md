@@ -216,3 +216,22 @@ Important limitation:
 - no SQLAlchemy relationships are defined yet
 - foreign keys and object relationships will be added in later tasks
 - for now, only the core scalar attributes are mapped and stored
+
+## Task 8 Notes
+
+Task 8 adds the ORM relationships between the mapped entities.
+
+What changed:
+
+- `User.places` and `User.reviews` are now one-to-many relationships
+- `Place.owner` links each place back to its owning user
+- `Place.reviews` and `Review.place` form the place-to-review relationship
+- `Review.author` links each review back to its user
+- `Place` and `Amenity` are now connected through a many-to-many association
+  table named `place_amenity`
+- the facade now converts incoming `amenity_ids` into real SQLAlchemy
+  relationship assignments when creating or updating places
+
+This gives the project proper bidirectional ORM navigation while keeping the
+existing API payload format based on `owner_id`, `user_id`, `place_id`, and
+`amenity_ids`.

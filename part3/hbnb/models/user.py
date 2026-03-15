@@ -39,6 +39,18 @@ class User(BaseModel, SQLAlchemyModel):
         _email = db.Column("email", db.String(255), nullable=False, unique=True, index=True)
         _password = db.Column("password", db.String(255), nullable=False)
         _is_admin = db.Column("is_admin", db.Boolean, nullable=False, default=False)
+        places = db.relationship(
+            "Place",
+            back_populates="owner",
+            cascade="all, delete-orphan",
+            lazy=True,
+        )
+        reviews = db.relationship(
+            "Review",
+            back_populates="author",
+            cascade="all, delete-orphan",
+            lazy=True,
+        )
 
     EMAIL_PATTERN = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 

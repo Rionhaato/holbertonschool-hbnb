@@ -26,8 +26,22 @@ class Review(BaseModel, SQLAlchemyModel):
     if db is not None:
         _text = db.Column("text", db.Text, nullable=False)
         _rating = db.Column("rating", db.Integer, nullable=False, default=0)
-        _user_id = db.Column("user_id", db.String(36), nullable=False, index=True)
-        _place_id = db.Column("place_id", db.String(36), nullable=False, index=True)
+        _user_id = db.Column(
+            "user_id",
+            db.String(36),
+            db.ForeignKey("users.id"),
+            nullable=False,
+            index=True,
+        )
+        _place_id = db.Column(
+            "place_id",
+            db.String(36),
+            db.ForeignKey("places.id"),
+            nullable=False,
+            index=True,
+        )
+        author = db.relationship("User", back_populates="reviews", lazy=True)
+        place = db.relationship("Place", back_populates="reviews", lazy=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

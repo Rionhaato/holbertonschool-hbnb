@@ -36,6 +36,14 @@ class HBnBFacade:
     def _delete(self, model_cls: type, obj_id: str) -> bool:
         return self.repository.delete(model_cls.__name__, obj_id)
 
+    @staticmethod
+    def _assign_place_amenities(place: Place, amenities: list[Amenity]) -> None:
+        """Attach amenity relationships when the Place model supports them."""
+        if hasattr(place, "amenities"):
+            place.amenities = list(amenities)
+            if hasattr(place, "_amenity_ids_cache"):
+                place._amenity_ids_cache = [amenity.id for amenity in amenities]
+
     def create_user(self, data: dict[str, Any]) -> User:
         email = data.get("email", "").strip().lower()
         if not email:
@@ -117,11 +125,16 @@ class HBnBFacade:
             raise ValueError("owner_id must reference an existing user")
 
         amenity_ids = data.get("amenity_ids", [])
+        amenities = []
         for amenity_id in amenity_ids:
-            if self.get_amenity(amenity_id) is None:
+            amenity = self.get_amenity(amenity_id)
+            if amenity is None:
                 raise ValueError(f"amenity_id not found: {amenity_id}")
+            amenities.append(amenity)
 
-        return self._create(Place, data)
+        place = Place(**data)
+        self._assign_place_amenities(place, amenities)
+        return self.repository.add(place)
 
     def get_place(self, place_id: str) -> Place | None:
         return self._get(Place, place_id)
@@ -134,11 +147,23 @@ class HBnBFacade:
             raise ValueError("owner_id must reference an existing user")
 
         if "amenity_ids" in data:
+            amenities = []
             for amenity_id in data["amenity_ids"]:
-                if self.get_amenity(amenity_id) is None:
+                amenity = self.get_amenity(amenity_id)
+                if amenity is None:
                     raise ValueError(f"amenity_id not found: {amenity_id}")
+                amenities.append(amenity)
+        else:
+            amenities = None
 
-        return self._update(Place, place_id, data)
+        place = self.get_place(place_id)
+        if place is None:
+            return None
+
+        place.update(data)
+        if amenities is not None:
+            self._assign_place_amenities(place, amenities)
+        return self.repository.update(place)
 
     def delete_place(self, place_id: str) -> bool:
         return self._delete(Place, place_id)

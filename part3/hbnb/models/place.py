@@ -22,6 +22,15 @@ else:
 
         pass
 
+if db is not None:
+    place_amenity = db.Table(
+        "place_amenity",
+        db.Column("place_id", db.String(36), db.ForeignKey("places.id"), primary_key=True),
+        db.Column("amenity_id", db.String(36), db.ForeignKey("amenities.id"), primary_key=True),
+    )
+else:
+    place_amenity = None
+
 
 class Place(BaseModel, SQLAlchemyModel):
     """Represents a place listed in HBnB."""
@@ -34,16 +43,26 @@ class Place(BaseModel, SQLAlchemyModel):
         _price = db.Column("price", db.Float, nullable=False, default=0.0)
         _latitude = db.Column("latitude", db.Float, nullable=False, default=0.0)
         _longitude = db.Column("longitude", db.Float, nullable=False, default=0.0)
-        _owner_id = db.Column("owner_id", db.String(36), nullable=False, index=True)
-        if MutableList is not None:
-            _amenity_ids = db.Column(
-                "amenity_ids",
-                MutableList.as_mutable(db.JSON),
-                nullable=False,
-                default=list,
-            )
-        else:
-            _amenity_ids = db.Column("amenity_ids", db.JSON, nullable=False, default=list)
+        _owner_id = db.Column(
+            "owner_id",
+            db.String(36),
+            db.ForeignKey("users.id"),
+            nullable=False,
+            index=True,
+        )
+        owner = db.relationship("User", back_populates="places", lazy=True)
+        reviews = db.relationship(
+            "Review",
+            back_populates="place",
+            cascade="all, delete-orphan",
+            lazy=True,
+        )
+        amenities = db.relationship(
+            "Amenity",
+            secondary=place_amenity,
+            back_populates="places",
+            lazy=True,
+        )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -134,7 +153,9 @@ class Place(BaseModel, SQLAlchemyModel):
 
     @property
     def amenity_ids(self) -> list[str]:
-        return list(self._amenity_ids)
+        if hasattr(self, "amenities"):
+            return [amenity.id for amenity in self.amenities]
+        return list(getattr(self, "_amenity_ids_cache", []))
 
     @amenity_ids.setter
     def amenity_ids(self, value: list[str]) -> None:
@@ -149,7 +170,7 @@ class Place(BaseModel, SQLAlchemyModel):
                 raise ValueError("amenity_ids cannot contain empty values")
             if cleaned not in normalized:
                 normalized.append(cleaned)
-        self._amenity_ids = normalized
+        self._amenity_ids_cache = normalized
 
     def add_amenity(self, amenity_id: str) -> None:
         """Attach an amenity id to the place."""
@@ -158,14 +179,18 @@ class Place(BaseModel, SQLAlchemyModel):
         cleaned = amenity_id.strip()
         if not cleaned:
             raise ValueError("amenity_id cannot be empty")
-        if cleaned not in self._amenity_ids:
-            self._amenity_ids.append(cleaned)
+        cached = getattr(self, "_amenity_ids_cache", [])
+        if cleaned not in cached:
+            cached.append(cleaned)
+            self._amenity_ids_cache = cached
             self.touch()
 
     def remove_amenity(self, amenity_id: str) -> bool:
         """Detach an amenity id from the place."""
-        if amenity_id in self._amenity_ids:
-            self._amenity_ids.remove(amenity_id)
+        cached = getattr(self, "_amenity_ids_cache", [])
+        if amenity_id in cached:
+            cached.remove(amenity_id)
+            self._amenity_ids_cache = cached
             self.touch()
             return True
         return False

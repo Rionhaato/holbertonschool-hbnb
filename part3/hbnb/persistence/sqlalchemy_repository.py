@@ -26,6 +26,22 @@ class SQLAlchemyRepository(Repository):
             raise KeyError(f"No SQLAlchemy model registered for {model_name}")
         return model_cls
 
+    @staticmethod
+    def _translate_filters(model_cls: type, filters: dict[str, Any]) -> dict[str, Any]:
+        translated = {}
+        for key, value in filters.items():
+            if hasattr(model_cls, key):
+                translated[key] = value
+                continue
+
+            private_key = f"_{key}"
+            if hasattr(model_cls, private_key):
+                translated[private_key] = value
+                continue
+
+            translated[key] = value
+        return translated
+
     def add(self, obj: Any) -> Any:
         self.db.session.add(obj)
         self.db.session.commit()
@@ -60,4 +76,5 @@ class SQLAlchemyRepository(Repository):
 
     def get_by_attribute(self, model_name: str, **filters: Any) -> list[Any]:
         model_cls = self._resolve_model(model_name)
-        return self.db.session.query(model_cls).filter_by(**filters).all()
+        translated_filters = self._translate_filters(model_cls, filters)
+        return self.db.session.query(model_cls).filter_by(**translated_filters).all()
