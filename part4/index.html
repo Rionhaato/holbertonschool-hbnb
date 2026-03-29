@@ -19,14 +19,14 @@
                     <h1>Find your next stay</h1>
                 </div>
             </div>
-            <a href="login.html" class="login-button">Login</a>
+            <a href="login.html" class="login-button auth-link">Login</a>
         </header>
 
         <nav class="site-nav" aria-label="Primary">
             <a href="index.html" aria-current="page">Places</a>
             <a href="place.html">Place Details</a>
             <a href="add_review.html">Add Review</a>
-            <a href="login.html">Login</a>
+            <a href="login.html" class="auth-link">Login</a>
         </nav>
 
         <main>
@@ -36,14 +36,12 @@
                     <h2>Comfortable spaces for city breaks, remote work, and longer stays.</h2>
                 </div>
                 <form class="filter-bar" action="#" method="get">
-                    <label for="country-filter">Country</label>
-                    <select id="country-filter" name="country">
-                        <option value="">All Countries</option>
-                        <option>Argentina</option>
-                        <option>Bolivia</option>
-                        <option>Canada</option>
-                        <option>Mexico</option>
-                        <option>United States</option>
+                    <label for="price-filter">Maximum Price</label>
+                    <select id="price-filter" name="price">
+                        <option value="10">10</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="all" selected>All</option>
                     </select>
                 </form>
             </section>
@@ -51,43 +49,11 @@
             <section aria-labelledby="places-heading">
                 <div class="section-heading">
                     <h2 id="places-heading">Available Places</h2>
-                    <p>Browse featured stays prepared for the next API integration tasks.</p>
+                    <p>Browse the full list from the API and narrow the results by price.</p>
                 </div>
 
-                <div class="places-grid">
-                    <article class="place-card">
-                        <div class="card-media coastal-stay"></div>
-                        <div class="card-content">
-                            <h3>Coastal Loft</h3>
-                            <p class="place-meta">La Paz, Bolivia</p>
-                            <p class="place-price">$95 / night</p>
-                            <p>Bright, modern loft with mountain views and a work-friendly desk setup.</p>
-                            <a href="place.html" class="details-button">View Details</a>
-                        </div>
-                    </article>
-
-                    <article class="place-card">
-                        <div class="card-media urban-suite"></div>
-                        <div class="card-content">
-                            <h3>Urban Garden Suite</h3>
-                            <p class="place-meta">Mexico City, Mexico</p>
-                            <p class="place-price">$120 / night</p>
-                            <p>Stylish apartment near restaurants, museums, and a leafy private patio.</p>
-                            <a href="place.html" class="details-button">View Details</a>
-                        </div>
-                    </article>
-
-                    <article class="place-card">
-                        <div class="card-media lake-cabin"></div>
-                        <div class="card-content">
-                            <h3>Lake Cabin Retreat</h3>
-                            <p class="place-meta">Banff, Canada</p>
-                            <p class="place-price">$180 / night</p>
-                            <p>Warm wood interiors, fireplace evenings, and easy trail access year-round.</p>
-                            <a href="place.html" class="details-button">View Details</a>
-                        </div>
-                    </article>
-                </div>
+                <p id="places-status" class="form-message status-message">Loading places...</p>
+                <div id="places-list" class="places-grid"></div>
             </section>
         </main>
 
@@ -95,5 +61,6 @@
             <p>All rights reserved.</p>
         </footer>
     </div>
+    <script src="scripts.js"></script>
 </body>
 </html>

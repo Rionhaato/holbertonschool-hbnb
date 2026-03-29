@@ -325,6 +325,35 @@ main {
     margin-top: 20px;
 }
 
+.form-message {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid transparent;
+}
+
+.error-message {
+    color: #8a1c1c;
+    background: #fde8e8;
+    border-color: #f4b4b4;
+}
+
+.status-message {
+    color: var(--accent-dark);
+    background: #e7f6f4;
+    border-color: #b8e0da;
+}
+
+.empty-message {
+    color: var(--muted);
+    background: #f7f2eb;
+    border-color: #e4d7c8;
+}
+
+.is-hidden {
+    display: none !important;
+}
+
 .form-row textarea {
     resize: vertical;
 }
