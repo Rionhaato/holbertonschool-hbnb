@@ -295,10 +295,21 @@ main {
     margin-bottom: 28px;
 }
 
+.place-details[hidden],
+#reviews-section[hidden],
+#place-hero[hidden] {
+    display: none;
+}
+
 .amenities-list {
     margin: 0;
     padding-left: 20px;
     color: var(--muted);
+}
+
+.amenities-list.is-plain {
+    list-style: none;
+    padding-left: 0;
 }
 
 .review-header {
