@@ -1,5 +1,11 @@
 const API_BASE_URL = 'http://127.0.0.1:5000/api/v1';
 let allPlaces = [];
+const PLACE_IMAGE_MAP = {
+    'demo loft': 'images/places/demo-loft.png',
+    'city studio': 'images/places/city-studio.png',
+    'mountain cabin': 'images/places/mountain-cabin.png',
+    'beach house': 'images/places/beach-house.png'
+};
 
 function setCookie(name, value, maxAgeSeconds = 86400) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
@@ -111,11 +117,15 @@ function buildPlaceLocation(place) {
     return `${latitude}, ${longitude}`;
 }
 
+function getPlaceImageSrc(place) {
+    const normalizedTitle = (place.title || '').trim().toLowerCase();
+    return PLACE_IMAGE_MAP[normalizedTitle] || 'images/places/demo-loft.png';
+}
+
 function createPlaceCard(place, index) {
     const article = document.createElement('article');
-    const mediaClasses = ['coastal-stay', 'urban-suite', 'lake-cabin'];
-    const mediaClass = mediaClasses[index % mediaClasses.length];
     const media = document.createElement('div');
+    const mediaImage = document.createElement('img');
     const content = document.createElement('div');
     const title = document.createElement('h3');
     const location = document.createElement('p');
@@ -125,7 +135,10 @@ function createPlaceCard(place, index) {
 
     article.className = 'place-card';
     article.dataset.price = String(place.price);
-    media.className = `card-media ${mediaClass}`;
+    media.className = 'card-media';
+    mediaImage.src = getPlaceImageSrc(place);
+    mediaImage.alt = `${place.title} preview`;
+    media.appendChild(mediaImage);
     content.className = 'card-content';
     title.textContent = place.title;
     location.className = 'place-meta';
@@ -312,16 +325,16 @@ function displayPlaceDetails(place) {
     const reviewsList = document.getElementById('reviews-list');
     const addReviewLink = document.getElementById('add-review-link');
     const token = getCookie('token');
-    const heroClasses = ['coastal-stay', 'urban-suite', 'lake-cabin'];
-    const heroClass = heroClasses[Math.abs((place.title || '').length) % heroClasses.length];
     const hostParagraph = document.createElement('p');
     const descriptionParagraph = document.createElement('p');
     const locationParagraph = document.createElement('p');
     const amenitiesList = document.createElement('ul');
+    const heroPhoto = document.createElement('img');
 
     heroCopy.innerHTML = '';
     detailsContent.innerHTML = '';
     reviewsList.innerHTML = '';
+    heroImage.innerHTML = '';
 
     const eyebrow = document.createElement('p');
     eyebrow.className = 'eyebrow';
@@ -338,7 +351,10 @@ function displayPlaceDetails(place) {
     heroCopy.appendChild(price);
     heroCopy.appendChild(summary);
 
-    heroImage.className = `hero-image ${heroClass}`;
+    heroPhoto.src = getPlaceImageSrc(place);
+    heroPhoto.alt = `${place.title} hero image`;
+    heroImage.className = 'hero-image';
+    heroImage.appendChild(heroPhoto);
 
     hostParagraph.textContent = buildHostName(place.owner);
     descriptionParagraph.textContent = place.description || 'No description provided for this place yet.';
