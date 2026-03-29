@@ -19,23 +19,25 @@
                     <h1>Share your experience</h1>
                 </div>
             </div>
-            <a href="login.html" class="login-button">Login</a>
+            <a href="login.html" class="login-button auth-link">Login</a>
         </header>
 
         <nav class="site-nav" aria-label="Primary">
             <a href="index.html">Places</a>
             <a href="place.html">Place Details</a>
             <a href="add_review.html" aria-current="page">Add Review</a>
-            <a href="login.html">Login</a>
+            <a href="login.html" class="auth-link">Login</a>
         </nav>
 
         <main class="centered-main">
             <section class="add-review" aria-labelledby="review-heading">
                 <p class="eyebrow">Authenticated route</p>
-                <h2 id="review-heading">Add a review for Coastal Loft</h2>
-                <p>Designed for the authenticated review flow you will connect in the next tasks.</p>
+                <h2 id="review-heading">Add a review</h2>
+                <p id="review-subheading">Share feedback for the selected place.</p>
 
-                <form class="form" action="#" method="post">
+                <p id="review-message" class="form-message status-message" hidden></p>
+
+                <form id="review-form" class="form" action="#" method="post" novalidate>
                     <div class="form-row">
                         <label for="rating">Rating</label>
                         <select id="rating" name="rating" required>
@@ -51,7 +53,7 @@
 
                     <div class="form-row">
                         <label for="comment">Comment</label>
-                        <textarea id="comment" name="comment" rows="6" placeholder="Describe your stay..." required></textarea>
+                        <textarea id="review-text" name="comment" rows="6" placeholder="Describe your stay..." required></textarea>
                     </div>
 
                     <button type="submit" class="primary-button">Submit Review</button>
