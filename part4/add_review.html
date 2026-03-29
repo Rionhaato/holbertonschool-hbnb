@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HBnB | Add Review</title>
+    <link rel="icon" type="image/png" href="images/icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="site-header">
+            <div class="brand">
+                <a href="index.html" aria-label="HBnB home">
+                    <img src="images/logo.png" alt="HBnB logo" class="logo">
+                </a>
+                <div>
+                    <p class="eyebrow">Simple Web Client</p>
+                    <h1>Share your experience</h1>
+                </div>
+            </div>
+            <a href="login.html" class="login-button">Login</a>
+        </header>
+
+        <nav class="site-nav" aria-label="Primary">
+            <a href="index.html">Places</a>
+            <a href="place.html">Place Details</a>
+            <a href="add_review.html" aria-current="page">Add Review</a>
+            <a href="login.html">Login</a>
+        </nav>
+
+        <main class="centered-main">
+            <section class="add-review" aria-labelledby="review-heading">
+                <p class="eyebrow">Authenticated route</p>
+                <h2 id="review-heading">Add a review for Coastal Loft</h2>
+                <p>Designed for the authenticated review flow you will connect in the next tasks.</p>
+
+                <form class="form" action="#" method="post">
+                    <div class="form-row">
+                        <label for="rating">Rating</label>
+                        <select id="rating" name="rating" required>
+                            <option value="">Select a rating</option>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Very Good</option>
+                            <option value="3">3 - Good</option>
+                            <option value="2">2 - Fair</option>
+                            <option value="1">1 - Poor</option>
+                            <option value="0">0 - Not recommended</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label for="comment">Comment</label>
+                        <textarea id="comment" name="comment" rows="6" placeholder="Describe your stay..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="primary-button">Submit Review</button>
+                </form>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

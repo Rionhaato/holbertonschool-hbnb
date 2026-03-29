@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HBnB | Place Details</title>
+    <link rel="icon" type="image/png" href="images/icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="site-header">
+            <div class="brand">
+                <a href="index.html" aria-label="HBnB home">
+                    <img src="images/logo.png" alt="HBnB logo" class="logo">
+                </a>
+                <div>
+                    <p class="eyebrow">Simple Web Client</p>
+                    <h1>Place details</h1>
+                </div>
+            </div>
+            <a href="login.html" class="login-button">Login</a>
+        </header>
+
+        <nav class="site-nav" aria-label="Primary">
+            <a href="index.html">Places</a>
+            <a href="place.html" aria-current="page">Place Details</a>
+            <a href="add_review.html">Add Review</a>
+            <a href="login.html">Login</a>
+        </nav>
+
+        <main>
+            <section class="place-hero">
+                <div class="place-hero-copy">
+                    <p class="eyebrow">Featured stay</p>
+                    <h2>Coastal Loft</h2>
+                    <p class="place-price">$95 / night</p>
+                    <p>Clean lines, natural light, and a quiet atmosphere designed for both rest and focus.</p>
+                </div>
+                <div class="hero-image coastal-stay" aria-hidden="true"></div>
+            </section>
+
+            <section class="place-details" aria-labelledby="details-heading">
+                <div class="section-heading">
+                    <h2 id="details-heading">Stay overview</h2>
+                    <p>Structured to match the place payload from the Part 3 API.</p>
+                </div>
+
+                <div class="details-grid">
+                    <article class="place-info">
+                        <h3>Host</h3>
+                        <p>Marina Alvarez</p>
+                    </article>
+
+                    <article class="place-info">
+                        <h3>Description</h3>
+                        <p>Two-room loft with full kitchen, fast Wi-Fi, comfortable bedding, and a reading corner.</p>
+                    </article>
+
+                    <article class="place-info">
+                        <h3>Location</h3>
+                        <p>La Paz, Bolivia</p>
+                    </article>
+
+                    <article class="place-info">
+                        <h3>Amenities</h3>
+                        <ul class="amenities-list">
+                            <li>Wi-Fi</li>
+                            <li>Workspace</li>
+                            <li>Kitchen</li>
+                            <li>Mountain view</li>
+                        </ul>
+                    </article>
+                </div>
+            </section>
+
+            <section aria-labelledby="reviews-heading">
+                <div class="section-heading split-heading">
+                    <div>
+                        <h2 id="reviews-heading">Guest reviews</h2>
+                        <p>Each review is presented as a card with comment, author, and rating.</p>
+                    </div>
+                    <a href="add_review.html" class="primary-button">Add Review</a>
+                </div>
+
+                <div class="reviews-grid">
+                    <article class="review-card">
+                        <div class="review-header">
+                            <h3>A quiet, polished stay</h3>
+                            <p class="rating">5 / 5</p>
+                        </div>
+                        <p>The space felt carefully prepared and the desk setup made remote work very easy.</p>
+                        <p class="review-author">By Andrea R.</p>
+                    </article>
+
+                    <article class="review-card">
+                        <div class="review-header">
+                            <h3>Great location</h3>
+                            <p class="rating">4 / 5</p>
+                        </div>
+                        <p>Walkable neighborhood, clean rooms, and a host who communicated clearly.</p>
+                        <p class="review-author">By David M.</p>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

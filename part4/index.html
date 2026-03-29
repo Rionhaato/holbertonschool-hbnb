@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>HBnB | Places</title>
+    <link rel="icon" type="image/png" href="images/icon.png">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="site-shell">
+        <header class="site-header">
+            <div class="brand">
+                <a href="index.html" aria-label="HBnB home">
+                    <img src="images/logo.png" alt="HBnB logo" class="logo">
+                </a>
+                <div>
+                    <p class="eyebrow">Simple Web Client</p>
+                    <h1>Find your next stay</h1>
+                </div>
+            </div>
+            <a href="login.html" class="login-button">Login</a>
+        </header>
+
+        <nav class="site-nav" aria-label="Primary">
+            <a href="index.html" aria-current="page">Places</a>
+            <a href="place.html">Place Details</a>
+            <a href="add_review.html">Add Review</a>
+            <a href="login.html">Login</a>
+        </nav>
+
+        <main>
+            <section class="hero">
+                <div>
+                    <p class="eyebrow">Curated homes</p>
+                    <h2>Comfortable spaces for city breaks, remote work, and longer stays.</h2>
+                </div>
+                <form class="filter-bar" action="#" method="get">
+                    <label for="country-filter">Country</label>
+                    <select id="country-filter" name="country">
+                        <option value="">All Countries</option>
+                        <option>Argentina</option>
+                        <option>Bolivia</option>
+                        <option>Canada</option>
+                        <option>Mexico</option>
+                        <option>United States</option>
+                    </select>
+                </form>
+            </section>
+
+            <section aria-labelledby="places-heading">
+                <div class="section-heading">
+                    <h2 id="places-heading">Available Places</h2>
+                    <p>Browse featured stays prepared for the next API integration tasks.</p>
+                </div>
+
+                <div class="places-grid">
+                    <article class="place-card">
+                        <div class="card-media coastal-stay"></div>
+                        <div class="card-content">
+                            <h3>Coastal Loft</h3>
+                            <p class="place-meta">La Paz, Bolivia</p>
+                            <p class="place-price">$95 / night</p>
+                            <p>Bright, modern loft with mountain views and a work-friendly desk setup.</p>
+                            <a href="place.html" class="details-button">View Details</a>
+                        </div>
+                    </article>
+
+                    <article class="place-card">
+                        <div class="card-media urban-suite"></div>
+                        <div class="card-content">
+                            <h3>Urban Garden Suite</h3>
+                            <p class="place-meta">Mexico City, Mexico</p>
+                            <p class="place-price">$120 / night</p>
+                            <p>Stylish apartment near restaurants, museums, and a leafy private patio.</p>
+                            <a href="place.html" class="details-button">View Details</a>
+                        </div>
+                    </article>
+
+                    <article class="place-card">
+                        <div class="card-media lake-cabin"></div>
+                        <div class="card-content">
+                            <h3>Lake Cabin Retreat</h3>
+                            <p class="place-meta">Banff, Canada</p>
+                            <p class="place-price">$180 / night</p>
+                            <p>Warm wood interiors, fireplace evenings, and easy trail access year-round.</p>
+                            <a href="place.html" class="details-button">View Details</a>
+                        </div>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
