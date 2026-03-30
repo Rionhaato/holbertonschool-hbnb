@@ -564,13 +564,24 @@ function initAddReviewPage() {
     }
 
     reviewHeading.textContent = 'Add a review for this place';
-    reviewSubheading.textContent = `Submitting feedback for place ${placeId}.`;
+    reviewSubheading.textContent = 'Loading selected place...';
 
     if (!userId) {
         setReviewMessage('Your session is missing the user id required by the API. Please log in again.', 'error-message');
         reviewForm.classList.add('is-hidden');
         return;
     }
+
+    fetchPlaceDetails(token, placeId)
+        .then((place) => {
+            reviewHeading.textContent = `Add a review for ${place.title}`;
+            reviewSubheading.textContent = `Submitting feedback for ${place.title}.`;
+            updateContextualNavLinks(place.id);
+        })
+        .catch(() => {
+            reviewHeading.textContent = 'Add a review for this place';
+            reviewSubheading.textContent = `Submitting feedback for place ${placeId}.`;
+        });
 
     reviewForm.addEventListener('submit', async (event) => {
         event.preventDefault();
