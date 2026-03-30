@@ -1,5 +1,6 @@
 const API_BASE_URL = 'http://127.0.0.1:5000/api/v1';
 let allPlaces = [];
+const PLACE_STORAGE_KEY = 'hbnb_current_place_id';
 const PLACE_IMAGE_MAP = {
     'demo loft': 'images/places/demo-loft.png',
     'city studio': 'images/places/city-studio.png',
@@ -149,6 +150,9 @@ function createPlaceCard(place, index) {
     detailsLink.href = `place.html?id=${encodeURIComponent(place.id)}`;
     detailsLink.className = 'details-button';
     detailsLink.textContent = 'View Details';
+    detailsLink.addEventListener('click', () => {
+        saveCurrentPlaceId(place.id);
+    });
 
     content.appendChild(title);
     content.appendChild(location);
@@ -239,6 +243,51 @@ async function fetchPlaces(token) {
 function getPlaceIdFromURL() {
     const searchParams = new URLSearchParams(window.location.search);
     return searchParams.get('id');
+}
+
+function saveCurrentPlaceId(placeId) {
+    if (!placeId) {
+        return;
+    }
+
+    localStorage.setItem(PLACE_STORAGE_KEY, placeId);
+}
+
+function getStoredPlaceId() {
+    return localStorage.getItem(PLACE_STORAGE_KEY);
+}
+
+function updateContextualNavLinks(placeId) {
+    if (!placeId) {
+        return;
+    }
+
+    saveCurrentPlaceId(placeId);
+
+    document.querySelectorAll('.place-nav-link').forEach((link) => {
+        link.href = `place.html?id=${encodeURIComponent(placeId)}`;
+    });
+
+    document.querySelectorAll('.review-nav-link').forEach((link) => {
+        link.href = `add_review.html?id=${encodeURIComponent(placeId)}`;
+    });
+}
+
+async function initContextualNavLinks() {
+    const knownPlaceId = getPlaceIdFromURL() || getStoredPlaceId();
+    if (knownPlaceId) {
+        updateContextualNavLinks(knownPlaceId);
+        return;
+    }
+
+    try {
+        const places = await fetchPlaces(getCookie('token'));
+        if (places.length) {
+            updateContextualNavLinks(places[0].id);
+        }
+    } catch (error) {
+        return;
+    }
 }
 
 async function fetchPlaceDetails(token, placeId) {
@@ -445,6 +494,7 @@ async function initPlacePage() {
 
     try {
         const place = await fetchPlaceDetails(token, placeId);
+        updateContextualNavLinks(placeId);
         displayPlaceDetails(place);
     } catch (error) {
         setPlaceStatus(error.message, 'error-message');
@@ -626,6 +676,7 @@ function initLoginForm() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateAuthenticationUI();
+    initContextualNavLinks();
     initLoginForm();
     initIndexPage();
     initPlacePage();
