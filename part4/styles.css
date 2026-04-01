@@ -110,6 +110,81 @@ main,
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
+.account-controls {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 10px 8px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(17, 94, 89, 0.16);
+    box-shadow: var(--shadow);
+}
+
+.user-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+}
+
+.user-meta {
+    min-width: 0;
+}
+
+.user-label,
+.user-email {
+    margin: 0;
+}
+
+.user-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-dark);
+}
+
+.user-email {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.95rem;
+    color: var(--ink);
+}
+
+.logout-button {
+    min-height: 38px;
+    padding: 8px 14px;
+    border: 1px solid rgba(17, 94, 89, 0.18);
+    border-radius: 999px;
+    background: var(--panel);
+    color: var(--accent-dark);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.logout-button:hover,
+.logout-button:focus-visible {
+    background: var(--accent-soft);
+    transform: translateY(-1px);
+}
+
 .login-button:hover,
 .primary-button:hover,
 .details-button:hover,
@@ -403,6 +478,15 @@ main {
 
     .brand {
         margin-bottom: 18px;
+    }
+
+    .account-controls {
+        justify-content: stretch;
+    }
+
+    .user-chip {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .filter-bar,

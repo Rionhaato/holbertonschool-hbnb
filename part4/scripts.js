@@ -12,6 +12,10 @@ function setCookie(name, value, maxAgeSeconds = 86400) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
 }
 
+function deleteCookie(name) {
+    document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 function getCookie(name) {
     const cookies = document.cookie ? document.cookie.split('; ') : [];
 
@@ -71,13 +75,48 @@ async function loginUser(email, password) {
 
 function updateAuthenticationUI() {
     const token = getCookie('token');
+    const userEmail = getCookie('user_email');
     const authLinks = document.querySelectorAll('.auth-link');
+    const userChip = document.getElementById('user-chip');
+    const userEmailLabel = document.getElementById('user-email');
+    const userAvatar = document.getElementById('user-avatar');
 
     authLinks.forEach((link) => {
         link.classList.toggle('is-hidden', Boolean(token));
     });
 
+    if (userChip) {
+        userChip.classList.toggle('is-hidden', !token);
+    }
+
+    if (token && userEmail) {
+        if (userEmailLabel) {
+            userEmailLabel.textContent = userEmail;
+        }
+        if (userAvatar) {
+            userAvatar.textContent = userEmail.charAt(0).toUpperCase();
+        }
+    }
+
     return token;
+}
+
+function logoutUser() {
+    deleteCookie('token');
+    deleteCookie('user_id');
+    deleteCookie('user_email');
+    window.location.href = 'login.html';
+}
+
+function initLogoutButton() {
+    const logoutButton = document.getElementById('logout-button');
+    if (!logoutButton) {
+        return;
+    }
+
+    logoutButton.addEventListener('click', () => {
+        logoutUser();
+    });
 }
 
 function getRequestHeaders(token) {
@@ -696,6 +735,7 @@ function initLoginForm() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateAuthenticationUI();
+    initLogoutButton();
     initContextualNavLinks();
     initLoginForm();
     initIndexPage();

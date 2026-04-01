@@ -19,7 +19,17 @@
                     <h1>Find your next stay</h1>
                 </div>
             </div>
-            <a href="login.html" class="login-button auth-link">Login</a>
+            <div class="account-controls">
+                <a href="login.html" class="login-button auth-link">Login</a>
+                <div class="user-chip is-hidden" id="user-chip">
+                    <div class="user-avatar" id="user-avatar" aria-hidden="true">?</div>
+                    <div class="user-meta">
+                        <p class="user-label">Signed in as</p>
+                        <p class="user-email" id="user-email">Guest</p>
+                    </div>
+                    <button type="button" class="logout-button" id="logout-button">Logout</button>
+                </div>
+            </div>
         </header>
 
         <nav class="site-nav" aria-label="Primary">
