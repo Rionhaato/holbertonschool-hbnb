@@ -364,6 +364,15 @@ function buildHostName(owner) {
     return fullName || owner.email || owner.id;
 }
 
+function buildReviewerName(review) {
+    if (review.author) {
+        const fullName = `${review.author.first_name || ''} ${review.author.last_name || ''}`.trim();
+        return fullName || review.author.email || review.author.id;
+    }
+
+    return review.user_id;
+}
+
 function displayPlaceDetails(place) {
     const hero = document.getElementById('place-hero');
     const heroCopy = document.getElementById('place-hero-copy');
@@ -444,7 +453,7 @@ function displayPlaceDetails(place) {
             rating.textContent = `${Number(review.rating)} / 5`;
             comment.textContent = review.text || 'No review comment provided.';
             author.className = 'review-author';
-            author.textContent = `By user ${review.user_id}`;
+            author.textContent = `By ${buildReviewerName(review)}`;
 
             reviewHeader.appendChild(heading);
             reviewHeader.appendChild(rating);

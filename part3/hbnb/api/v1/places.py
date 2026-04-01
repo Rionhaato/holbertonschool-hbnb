@@ -65,6 +65,7 @@ place_review_model = api.model(
         "rating": fields.Integer(description="Rating (0-5)"),
         "user_id": fields.String(description="Author user id"),
         "place_id": fields.String(description="Place id"),
+        "author": fields.Nested(place_owner_model, description="Author details"),
     },
 )
 
@@ -126,6 +127,16 @@ def _serialize_place(place) -> dict:
             "rating": review.rating,
             "user_id": review.user_id,
             "place_id": review.place_id,
+            "author": (
+                {
+                    "id": author.id,
+                    "first_name": author.first_name,
+                    "last_name": author.last_name,
+                    "email": author.email,
+                }
+                if (author := facade.get_user(review.user_id)) is not None
+                else None
+            ),
         }
         for review in reviews
     ]

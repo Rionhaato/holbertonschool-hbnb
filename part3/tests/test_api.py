@@ -530,6 +530,9 @@ class TestAPI(unittest.TestCase):
         place_res = self.client.get(f"/api/v1/places/{place['id']}")
         self.assertEqual(place_res.status_code, 200)
         self.assertEqual(len(place_res.get_json()["reviews"]), 1)
+        self.assertEqual(
+            place_res.get_json()["reviews"][0]["author"]["email"], "author@example.com"
+        )
 
         headers = self._auth_headers(email="author@example.com")
         put_res = self.client.put(
