@@ -153,7 +153,7 @@ class Place(BaseModel, SQLAlchemyModel):
 
     @property
     def amenity_ids(self) -> list[str]:
-        if hasattr(self, "amenities"):
+        if hasattr(self, "amenities") and self.amenities:
             return [amenity.id for amenity in self.amenities]
         return list(getattr(self, "_amenity_ids_cache", []))
 

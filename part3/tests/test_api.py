@@ -92,6 +92,8 @@ class TestAPI(unittest.TestCase):
     def _create_place(self, owner_id, amenity_ids=None):
         if amenity_ids is None:
             amenity_ids = []
+        owner = self.app.config["FACADE"].get_user(owner_id)
+        self.assertIsNotNone(owner)
         payload = {
             "title": "Cozy Loft",
             "description": "Center",
@@ -101,19 +103,21 @@ class TestAPI(unittest.TestCase):
             "owner_id": owner_id,
             "amenity_ids": amenity_ids,
         }
-        headers = self._auth_headers(email="owner@example.com")
+        headers = self._auth_headers(email=owner.email)
         res = self.client.post("/api/v1/places/", json=payload, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
 
     def _create_review(self, user_id, place_id, text="Great stay", rating=5):
+        user = self.app.config["FACADE"].get_user(user_id)
+        self.assertIsNotNone(user)
         payload = {
             "text": text,
             "rating": rating,
             "user_id": user_id,
             "place_id": place_id,
         }
-        headers = self._auth_headers(email="author@example.com")
+        headers = self._auth_headers(email=user.email)
         res = self.client.post("/api/v1/reviews/", json=payload, headers=headers)
         self.assertEqual(res.status_code, 201)
         return res.get_json()
@@ -509,14 +513,15 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(put_res.get_json()["price"], 120.0)
 
     def test_reviews_crud_with_delete(self):
-        user = self._create_user("author@example.com")
-        place = self._create_place(user["id"])
-        review = self._create_review(user["id"], place["id"])
+        owner = self._create_user("author-owner@example.com")
+        reviewer = self._create_user("author@example.com")
+        place = self._create_place(owner["id"])
+        review = self._create_review(reviewer["id"], place["id"])
         review_id = review["id"]
 
         get_res = self.client.get(f"/api/v1/reviews/{review_id}")
         self.assertEqual(get_res.status_code, 200)
-        self.assertEqual(get_res.get_json()["author"]["id"], user["id"])
+        self.assertEqual(get_res.get_json()["author"]["id"], reviewer["id"])
 
         place_reviews = self.client.get(f"/api/v1/places/{place['id']}/reviews")
         self.assertEqual(place_reviews.status_code, 200)
@@ -554,6 +559,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(bad_user.status_code, 400)
 
         owner = self._create_user("place-owner@example.com")
+        reviewer = self._create_user("place-reviewer@example.com")
         bad_place = self.client.post(
             "/api/v1/places/",
             json={
@@ -572,8 +578,8 @@ class TestAPI(unittest.TestCase):
         place = self._create_place(owner["id"])
         bad_review = self.client.post(
             "/api/v1/reviews/",
-            json={"text": "x", "rating": 9, "user_id": owner["id"], "place_id": place["id"]},
-            headers=self._auth_headers(email="place-owner@example.com"),
+            json={"text": "x", "rating": 9, "user_id": reviewer["id"], "place_id": place["id"]},
+            headers=self._auth_headers(email="place-reviewer@example.com"),
         )
         self.assertEqual(bad_review.status_code, 400)
 
