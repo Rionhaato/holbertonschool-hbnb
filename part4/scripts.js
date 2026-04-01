@@ -7,6 +7,12 @@ const PLACE_IMAGE_MAP = {
     'mountain cabin': 'images/places/mountain-cabin.png',
     'beach house': 'images/places/beach-house.png'
 };
+const PLACE_LOCATION_LABELS = {
+    'demo loft': 'Rome, Italy',
+    'city studio': 'New York City, USA',
+    'mountain cabin': 'Alaska, USA',
+    'beach house': 'Penang, Malaysia'
+};
 
 function setCookie(name, value, maxAgeSeconds = 86400) {
     document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
@@ -152,9 +158,8 @@ function hidePlacesStatus() {
 }
 
 function buildPlaceLocation(place) {
-    const latitude = Number(place.latitude).toFixed(4);
-    const longitude = Number(place.longitude).toFixed(4);
-    return `${latitude}, ${longitude}`;
+    const normalizedTitle = (place.title || '').trim().toLowerCase();
+    return PLACE_LOCATION_LABELS[normalizedTitle] || 'Location available on request';
 }
 
 function getPlaceImageSrc(place) {
