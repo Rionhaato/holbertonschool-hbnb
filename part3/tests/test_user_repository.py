@@ -105,3 +105,46 @@ class TestUserRepository(unittest.TestCase):
             self.assertEqual(owner.places[0].id, place.id)
             self.assertEqual(owner.reviews[0].id, review.id)
             self.assertEqual(amenity.places[0].id, place.id)
+
+    def test_reviews_can_be_queried_by_place_with_sqlalchemy(self):
+        with self.app.app_context():
+            owner = self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "Owner",
+                    "last_name": "User",
+                    "email": "owner2@example.com",
+                    "password": "secret",
+                }
+            )
+            reviewer = self.app.config["FACADE"].create_user(
+                {
+                    "first_name": "Reviewer",
+                    "last_name": "User",
+                    "email": "reviewer@example.com",
+                    "password": "secret",
+                }
+            )
+            place = self.app.config["FACADE"].create_place(
+                {
+                    "title": "Loft",
+                    "description": "Central",
+                    "price": 120,
+                    "latitude": 40.0,
+                    "longitude": -73.0,
+                    "owner_id": owner.id,
+                    "amenity_ids": [],
+                }
+            )
+            review = self.app.config["FACADE"].create_review(
+                {
+                    "text": "Great stay",
+                    "rating": 5,
+                    "user_id": reviewer.id,
+                    "place_id": place.id,
+                }
+            )
+
+            reviews = self.app.config["FACADE"].get_reviews_by_place(place.id)
+
+            self.assertEqual(len(reviews), 1)
+            self.assertEqual(reviews[0].id, review.id)

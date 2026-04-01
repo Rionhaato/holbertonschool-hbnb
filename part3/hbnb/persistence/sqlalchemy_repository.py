@@ -30,13 +30,13 @@ class SQLAlchemyRepository(Repository):
     def _translate_filters(model_cls: type, filters: dict[str, Any]) -> dict[str, Any]:
         translated = {}
         for key, value in filters.items():
-            if hasattr(model_cls, key):
-                translated[key] = value
-                continue
-
             private_key = f"_{key}"
             if hasattr(model_cls, private_key):
                 translated[private_key] = value
+                continue
+
+            if hasattr(model_cls, key):
+                translated[key] = value
                 continue
 
             translated[key] = value
